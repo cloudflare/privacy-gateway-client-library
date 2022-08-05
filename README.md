@@ -42,7 +42,7 @@ To build for macOS, run the following:
 $ cargo build --target x86_64-apple-darwin --release
 ```
 
-rs with iOS, link with SystemConfiguration.framework when building your macOS app.
+As with iOS, link with SystemConfiguration.framework when building your macOS app.
 
 
 ## Android Build Instructions
