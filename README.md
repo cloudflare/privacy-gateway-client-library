@@ -95,7 +95,7 @@ cargo ndk \
     -o ./target/jniLibs build --release
 ```
 
-To use from java create 'OHttpNativeWrapper.java' with contets (the class name and the package are important because of jni conventions)
+To use from java create 'OHttpNativeWrapper.java' with contents (the class name and the package are important because of JNI conventions)
 
 ```java
 package org.platform;
