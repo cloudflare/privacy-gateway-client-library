@@ -43,3 +43,85 @@ $ cargo build --target x86_64-apple-darwin --release
 ```
 
 As with iOS, link with SystemConfiguration.framework when building your macOS app.
+
+
+## Android Build Instructions
+
+To build for android devices you must first download the appropriate binary
+distribution of standard library for valid target platform. This can be done using rustup:
+
+```
+rustup target add armv7-linux-androideabi
+# there are other targets that might be appropriate
+rustup show | grep android
+```
+
+To setup compilation for android you will also need to tell cargo 
+about other compilation tools especialy linker.
+Follow [NDK](https://developer.android.com/ndk) installation instructions.
+Then configure cargo with linker and archiver:
+
+```
+# set valid paths!
+export ANDROID_HOME=/Users/$USER/Library/Android/sdk
+export NDK_HOME=$ANDROID_HOME/ndk/25.0.8775105
+
+mkdir ~/.cargo
+cat << EOF > ~/.cargo/config
+[target.armv7-linux-androideabi]
+ar = "$NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-ar"
+linker = "$NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/armv7a-linux-androideabi24-clang++"
+EOF
+
+cargo build --target armv7-linux-androideabi
+```
+
+This should work but currently ends with error due to [bug](https://github.com/rust-lang/rust/pull/85806):
+
+```
+  = note: ld: error: unable to find library -lgcc
+          clang-14: error: linker command failed with exit code 1 (use -v to see invocation)
+```
+
+Ndk project has a workaround applied so should work out of the box:
+
+```
+cargo install cargo-ndk
+rustup target add \
+    aarch64-linux-android \
+    armv7-linux-androideabi \
+cargo ndk \
+    -t armeabi-v7a \
+    -t arm64-v8a \
+    -o ./target/jniLibs build --release
+```
+
+To use from java create 'OHttpNativeWrapper.java' with contents (the class name and the package are important because of JNI conventions)
+
+```java
+package org.platform;
+
+class OHttpNativeWrapper {
+
+    static {
+        System.loadLibrary("apprelay");
+    }
+
+    private static native long encapsulateRequest(byte[] config, byte[] msg);
+
+    private static native byte[] getEncapsulatedRequest(long ctx_ptr);
+
+    private static native void dropRequestContext(long ctx_ptr);
+
+    private static native byte[] decapsulateResponse(long ctx_ptr, byte[] encapsulated_response);
+}
+```
+
+And pass library using VM arguments:
+
+```
+# lib directory should contain libapprelay.so 
+-Djava.library.path="lib/"
+```
+
+
