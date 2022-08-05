@@ -47,7 +47,7 @@ As with iOS, link with SystemConfiguration.framework when building your macOS ap
 
 ## Android Build Instructions
 
-To build for android devices you must first download the apropriate binary
+To build for android devices you must first download the appropriate binary
 distribution of standard library for valid target platform. This can be done using rustup:
 
 ```
