@@ -57,8 +57,9 @@ rustup show | grep android
 ```
 
 To setup compilation for android you will also need to tell cargo 
-about other compilation tools especialy linker. To do so download [NDK](https://developer.android.com/ndk)
-and 
+about other compilation tools especialy linker.
+Follow [NDK](https://developer.android.com/ndk) installation instructions.
+Then configure cargo with linker and archiver:
 
 ```
 # set valid paths!
