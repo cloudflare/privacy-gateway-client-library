@@ -143,5 +143,5 @@ To build binaries with a smaller disk footprint you can use the `release-space-o
     -o ./target/jniLibs build --profile release-space-optimized
 ```
 
-For more background about the parameters set for this profile read [this repo](https://github.com/johnthagen/min-sized-rust)
+For more background about the parameters set for this profile read [this repo](https://github.com/johnthagen/min-sized-rust).
 
