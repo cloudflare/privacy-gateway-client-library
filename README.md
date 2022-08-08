@@ -126,7 +126,7 @@ And pass library using VM arguments:
 
 ## Building size optimized binaries
 
-To build binaries with smaller disk footprint you can activate `release-space-optimized` profile:
+To build binaries with a smaller disk footprint you can use the `release-space-optimized` profile:
 
 ```sh
 # for ios
