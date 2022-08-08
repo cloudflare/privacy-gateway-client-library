@@ -135,7 +135,7 @@ To build binaries with a smaller disk footprint you can use the `release-space-o
     --no-default-features \
     --profile release-space-optimized
 
-# for android this will fail using ndk but the binaries will be located 
+# for Android this will fail using ndk but the binaries will be located 
 # in different directory the bug https://github.com/bbqsrc/cargo-ndk/issues/73
 ➜  cargo ndk \
     -t armeabi-v7a \
