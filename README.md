@@ -29,7 +29,7 @@ info: component 'rust-std' for target 'x86_64-apple-darwin' is up to date
 With the pre-requisites installed, run `cargo build` in `--release` mode:
 
 ```sh
-➜  cargo build --target aarch64-apple-ios --release`
+➜  cargo build --target aarch64-apple-ios --release
 ```
 
 Library files will appear in `./target/aarch64-apple-ios/release`. SystemConfiguration.framework (part of the XCode SDK) is required for iOS and macOS apps.
@@ -38,8 +38,8 @@ Library files will appear in `./target/aarch64-apple-ios/release`. SystemConfigu
 
 To build for macOS, run the following:
 
-```
-$ cargo build --target x86_64-apple-darwin --release
+```sh
+➜ cargo build --target x86_64-apple-darwin --release
 ```
 
 As with iOS, link with SystemConfiguration.framework when building your macOS app.
@@ -50,10 +50,10 @@ As with iOS, link with SystemConfiguration.framework when building your macOS ap
 To build for android devices you must first download the appropriate binary
 distribution of standard library for valid target platform. This can be done using rustup:
 
-```
-rustup target add armv7-linux-androideabi
+```sh
+➜  rustup target add armv7-linux-androideabi
 # there are other targets that might be appropriate
-rustup show | grep android
+➜  rustup show | grep android
 ```
 
 To setup compilation for android you will also need to tell cargo 
@@ -61,19 +61,19 @@ about other compilation tools especialy linker.
 Follow [NDK](https://developer.android.com/ndk) installation instructions.
 Then configure cargo with linker and archiver:
 
-```
+```sh
 # set valid paths!
-export ANDROID_HOME=/Users/$USER/Library/Android/sdk
-export NDK_HOME=$ANDROID_HOME/ndk/25.0.8775105
+➜  export ANDROID_HOME=/Users/$USER/Library/Android/sdk
+➜  export NDK_HOME=$ANDROID_HOME/ndk/25.0.8775105
 
-mkdir ~/.cargo
-cat << EOF > ~/.cargo/config
+➜  mkdir ~/.cargo
+➜  cat << EOF > ~/.cargo/config
 [target.armv7-linux-androideabi]
 ar = "$NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-ar"
 linker = "$NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/armv7a-linux-androideabi24-clang++"
 EOF
 
-cargo build --target armv7-linux-androideabi
+➜  cargo build --target armv7-linux-androideabi
 ```
 
 This should work but currently ends with error due to [bug](https://github.com/rust-lang/rust/pull/85806):
@@ -85,12 +85,12 @@ This should work but currently ends with error due to [bug](https://github.com/r
 
 Ndk project has a workaround applied so should work out of the box:
 
-```
-cargo install cargo-ndk
-rustup target add \
+```sh
+➜  cargo install cargo-ndk
+➜  rustup target add \
     aarch64-linux-android \
     armv7-linux-androideabi \
-cargo ndk \
+➜  cargo ndk \
     -t armeabi-v7a \
     -t arm64-v8a \
     -o ./target/jniLibs build --release
@@ -124,4 +124,24 @@ And pass library using VM arguments:
 -Djava.library.path="lib/"
 ```
 
+## Building size optimized binaries
+
+To build binaries with smaller disk footprint you can activate `release-space-optimized` profile:
+
+```sh
+# for ios
+➜  cargo build \
+    --target aarch64-apple-ios \
+    --no-default-features \
+    --profile release-space-optimized
+
+# for android this will fail using ndk but the binaries will be located 
+# in different directory the bug https://github.com/bbqsrc/cargo-ndk/issues/73
+➜  cargo ndk \
+    -t armeabi-v7a \
+    -t arm64-v8a \
+    -o ./target/jniLibs build --profile release-space-optimized
+```
+
+For more background about the parameters set for this profile read [this repo](https://github.com/johnthagen/min-sized-rust)
 
