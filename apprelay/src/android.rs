@@ -14,7 +14,6 @@ pub extern "system" fn Java_org_platform_OHttpNativeWrapper_encapsulateRequest(
     config: jbyteArray,
     msg: jbyteArray,
 ) -> jlong {
-    dbg!("encapsulateRequest");
     // First, we have to get the byte[] out of java.
     let config = env.convert_byte_array(config).unwrap();
     let msg = env.convert_byte_array(msg).unwrap();
@@ -34,8 +33,6 @@ pub unsafe extern "system" fn Java_org_platform_OHttpNativeWrapper_getEncapsulat
     context_ptr: jlong,
 ) -> jbyteArray {
     let context = &mut *(context_ptr as *mut RequestContext);
-
-    dbg!("getEncapsulatedRequest");
     env.byte_array_from_slice(&context.encapsulated_request[..])
         .unwrap()
 }
@@ -56,7 +53,6 @@ pub unsafe extern "system" fn Java_org_platform_OHttpNativeWrapper_decapsulateRe
     context_ptr: jlong,
     encapsulated_response: jbyteArray,
 ) -> jbyteArray {
-    dbg!("decapsulateResponse");
     let context = Box::from_raw(context_ptr as *mut RequestContext);
     let encapsulated_response = env.convert_byte_array(encapsulated_response).unwrap();
     let response = context
