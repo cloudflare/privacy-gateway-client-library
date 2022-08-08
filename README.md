@@ -129,7 +129,7 @@ And pass library using VM arguments:
 To build binaries with a smaller disk footprint you can use the `release-space-optimized` profile:
 
 ```sh
-# for ios
+# for iOS
 ➜  cargo build \
     --target aarch64-apple-ios \
     --no-default-features \
