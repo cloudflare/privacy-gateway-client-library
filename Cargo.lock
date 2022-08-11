@@ -56,6 +56,7 @@ dependencies = [
  "jni",
  "libc",
  "ohttp",
+ "thiserror",
 ]
 
 [[package]]
