@@ -151,3 +151,14 @@ To build binaries with a smaller disk footprint you can use the `release-space-o
 
 For more background about the parameters set for this profile read [this repo](https://github.com/johnthagen/min-sized-rust).
 
+## Logging in runtime
+
+The library uses crate `env_logger` configured to log to stdout. To enable logging set environment variable:
+
+```
+RUST_LOG=debug
+```
+
+And in your application be sure to call function `initialize_logging` for C api or `init` for jni.
+Initialization function can be called only once.
+

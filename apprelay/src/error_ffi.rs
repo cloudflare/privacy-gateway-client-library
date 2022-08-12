@@ -69,7 +69,7 @@ pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) 
         None => return 0,
     };
 
-    let error_message = format!("my error {:?}", last_error);
+    let error_message = last_error.to_string(); 
 
     let buffer = slice::from_raw_parts_mut(buffer as *mut u8, length as usize);
 
