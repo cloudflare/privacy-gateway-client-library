@@ -71,8 +71,8 @@ pub extern "system" fn Java_org_platform_OHttpNativeWrapper_encapsulateRequest(
 /// or -1 upon failure.
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by the caller.
-/// Be sure that the context has not been yet freed and that you are using valid pointer.
+/// Dereferences a pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using a valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
@@ -92,12 +92,12 @@ pub unsafe extern "system" fn Java_org_platform_OHttpNativeWrapper_getEncapsulat
 }
 
 /// Frees up context memory. Be sure to call this in cases:
-/// - after encapsulating the http request was not performed
-/// - the response has not been returned or is not successfull
+/// - after encapsulating the HTTP request was not performed
+/// - the response has not been returned or is not successful
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by the caller.
-/// Be sure that the context has not been yet freed and that you are using valid pointer.
+/// Dereferences a pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using a valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
@@ -117,8 +117,8 @@ pub unsafe extern "system" fn Java_org_platform_OHttpNativeWrapper_drop(
 /// If this function fails due JNI problems or decapsulation it returns a NULL pointer.
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by the caller.
-/// Be sure that the context has not been yet freed and that you are using valid pointer.
+/// Dereferences a pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using a valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]

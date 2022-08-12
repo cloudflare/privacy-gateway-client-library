@@ -11,6 +11,7 @@ ohttp = { git = "https://github.com/chris-wood/ohttp-1", features = ["rust-hpke"
 libc = "0.2"
 
 thiserror = "1.0.32"
+log = "0.4.17"
 
 [dependencies.jni]
 version = "0.19.0"

@@ -25,20 +25,20 @@ pub enum ClientError {
 }
 
 #[cfg(feature = "java")]
-mod android;
+pub mod android;
 
-mod error_ffi;
+pub mod error_ffi;
 
 pub struct RequestContext {
     encapsulated_request: Vec<u8>,
     response_context: ClientResponse,
 }
 
-// Return a pointer to encapsulated request
+/// Return a pointer to encapsulated request
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by the caller.
-/// Be sure that the context has not been yet freed and that you are using valid pointer.
+/// Dereferences a pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using a valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
@@ -49,8 +49,8 @@ pub unsafe extern "C" fn request_context_message_ffi(context: Box<RequestContext
 /// Return the size in bytes of the encapsulated request.
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by the caller.
-/// Be sure that the context has not been yet freed and that you are using valid pointer.
+/// Dereferences a pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using a valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
@@ -60,6 +60,20 @@ pub unsafe extern "C" fn request_context_message_len_ffi(
     (*Box::into_raw(context)).encapsulated_request.len()
 }
 
+/// Frees up context memory. Be sure to call this in cases:
+/// - after encapsulating the HTTP request was not performed
+/// - the response has not been returned or is not successful
+///
+/// # Safety
+/// Dereferences a pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using a valid pointer.
+///
+/// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
+#[no_mangle]
+pub unsafe extern "C" fn request_context_message_drop_ffi(context: Box<RequestContext>) {
+    let _context = context;
+}
+
 pub struct ResponseContext {
     response: Vec<u8>,
 }
@@ -67,8 +81,8 @@ pub struct ResponseContext {
 /// Return a pointer to the decapsulated response.
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by the caller.
-/// Be sure that the context has not been yet freed and that you are using valid pointer.
+/// Dereferences a pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using a valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
@@ -79,8 +93,8 @@ pub unsafe extern "C" fn response_context_message_ffi(context: Box<ResponseConte
 /// Return size in bytes of the decapsulated response.
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by the caller.
-/// Be sure that the context has not been yet freed and that you are using valid pointer.
+/// Dereferences a pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using a valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
@@ -90,16 +104,16 @@ pub unsafe extern "C" fn response_context_message_len_ffi(
     (*Box::into_raw(context)).response.len()
 }
 
-/// Encapsulates the provided `encoded_msg` using `encoded_config` and return
+/// Encapsulates the provided `encoded_msg` using `encoded_config` and returns
 /// a context used for decapsulating the corresponding response.
 ///
 /// This function will return a NULL pointer if:
-///     - creating the request context fails due to input errors.
-///     - encapsulation fails.
+/// - creating the request context fails due to input errors.
+/// - encapsulation fails.
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by the caller.
-/// Be sure that the context has not been yet freed and that you are using valid pointer.
+/// Dereferences a pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using a valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
@@ -145,8 +159,8 @@ pub unsafe extern "C" fn encapsulate_request_ffi(
 /// This function will return a NULL pointer if decapsulation fails.
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by the caller.
-/// Be sure that the context has not been yet freed and that you are using valid pointer.
+/// Dereferences a pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using a valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
