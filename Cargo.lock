@@ -55,7 +55,9 @@ dependencies = [
  "cbindgen",
  "jni",
  "libc",
+ "log",
  "ohttp",
+ "thiserror",
 ]
 
 [[package]]
