@@ -25,8 +25,8 @@ pub fn take_last_error() -> Option<Box<dyn Error>> {
     LAST_ERROR.with(|prev| prev.borrow_mut().take())
 }
 
-/// Return the number of bytes in the last error message
-/// Does not include any trailing null terminators
+/// Return the number of bytes in the last error message.
+/// Does not include any trailing null terminators.
 #[no_mangle]
 pub extern "C" fn last_error_length() -> libc::c_int {
     LAST_ERROR.with(|prev| match *prev.borrow() {
@@ -41,7 +41,7 @@ pub extern "C" fn last_error_length() -> libc::c_int {
 /// `-1` is returned if there is an error but something bad happened:
 ///     - provided `buffer` is to small
 ///     - or a provided `buffer` is a null pointer
-/// Otherewise the function returnes the number of bytes written to buffer
+/// Otherwise the function returns the number of bytes written to buffer.
 #[no_mangle]
 pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) -> c_int {
     if buffer.is_null() {

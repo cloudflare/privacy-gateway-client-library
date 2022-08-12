@@ -7,9 +7,9 @@ use jni::sys::{jbyteArray, jlong, jstring};
 use crate::error_ffi::update_last_error;
 use crate::{ClientError, RequestContext};
 
-/// Return most recent error as java `String`
+/// Return most recent error as a Java `String`.
 ///
-/// If the are no recent errors than this returns `null` pointer
+/// If the are no recent errors than this returns a NULL pointer.
 #[no_mangle]
 pub extern "system" fn Java_org_platform_OHttpNativeWrapper_lastErrorMessage(
     env: JNIEnv,
@@ -22,11 +22,9 @@ pub extern "system" fn Java_org_platform_OHttpNativeWrapper_lastErrorMessage(
     }
 }
 
-/// Encapsulates given request with provided configuration
+/// Encapsulates a request using the provided configuration.
 ///
-/// Returns a pointer to encapsulation context.
-/// If the provided values are null or function fails from other reason
-/// the return value will be `-1`
+/// Returns a pointer to encapsulation context, and returns -1 upon failure.
 #[no_mangle]
 pub extern "system" fn Java_org_platform_OHttpNativeWrapper_encapsulateRequest(
     env: JNIEnv,
@@ -67,15 +65,14 @@ pub extern "system" fn Java_org_platform_OHttpNativeWrapper_encapsulateRequest(
     }
 }
 
-/// Accesses the encapsulation result for given context
+/// Accesses the encapsulation result for given context.
 ///
-/// Returns an array containing encapsulated request ready for ohttp.
-///
-/// If the jni failes to create array the return value will be `-1`
+/// Returns an array containing an encapsulation request,
+/// or -1 upon failure.
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by user.
-/// Be sure that the context has not been yet freed and that you are using valid pointer
+/// This dereferences a raw pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
@@ -99,8 +96,8 @@ pub unsafe extern "system" fn Java_org_platform_OHttpNativeWrapper_getEncapsulat
 /// - the response has not been returned or is not successfull
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by user.
-/// Be sure that the context has not been yet freed and that you are using valid pointer
+/// This dereferences a raw pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
@@ -115,14 +112,13 @@ pub unsafe extern "system" fn Java_org_platform_OHttpNativeWrapper_drop(
 /// Decapsulates the provided response `encapsulated_response` using
 /// requests config obtain by dereferencing `context_ptr`
 ///
-/// Returns an array containing decapsulated response
+/// Returns an array containing the decapsulated response.
 ///
-/// If this funtion failes due to jni problems or decapsulation
-/// it will return null pointer
+/// If this function fails due JNI problems or decapsulation it returns a NULL pointer.
 ///
 /// # Safety
-/// This dereferences a raw pointer to `RequestContext` passed by user.
-/// Be sure that the context has not been yet freed and that you are using valid pointer
+/// This dereferences a raw pointer to `RequestContext` passed by the caller.
+/// Be sure that the context has not been yet freed and that you are using valid pointer.
 ///
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
