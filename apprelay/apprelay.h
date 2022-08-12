@@ -89,6 +89,8 @@ struct ResponseContext *decapsulate_response_ffi(struct RequestContext *context,
                                                  const uint8_t *encapsulated_response_ptr,
                                                  size_t encapsulated_response_len);
 
+void initialize_logging(void);
+
 // Return the number of bytes in the last error message.
 // Does not include any trailing null terminators.
 int last_error_length(void);

@@ -22,6 +22,12 @@ pub extern "system" fn Java_org_platform_OHttpNativeWrapper_lastErrorMessage(
     }
 }
 
+/// Initialize logging
+#[no_mangle]
+pub extern "system" fn Java_org_platform_OHttpNativeWrapper_init(_env: JNIEnv, _class: JClass) {
+    crate::error_ffi::initialize_logging();
+}
+
 /// Encapsulates a request using the provided configuration.
 ///
 /// Returns a pointer to encapsulation context, and returns -1 upon failure.
@@ -60,8 +66,13 @@ pub extern "system" fn Java_org_platform_OHttpNativeWrapper_encapsulateRequest(
     };
 
     unsafe {
-        crate::encapsulate_request_ffi(config.as_ptr(), config.len(), msg.as_ptr(), msg.len())
-            as jlong
+        let encapsulated =
+            crate::encapsulate_request_ffi(config.as_ptr(), config.len(), msg.as_ptr(), msg.len());
+        if encapsulated.is_null() {
+            -1
+        } else {
+            encapsulated as jlong
+        }
     }
 }
 

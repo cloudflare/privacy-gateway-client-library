@@ -10,18 +10,18 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum ClientError {
     #[error("Failed to create request context")]
-    RequestContextInitialization(ohttp::Error),
+    RequestContextInitialization(#[source] ohttp::Error),
     #[error("Failed to encapsulate request")]
-    EncapsulationFailed(ohttp::Error),
+    EncapsulationFailed(#[source] ohttp::Error),
     #[error("Failed to decapsulate request")]
-    DecapsulationFailed(ohttp::Error),
+    DecapsulationFailed(#[source] ohttp::Error),
 
     #[error("Invalid argument `{0}` passed")]
     InvalidArgument(String),
 
     #[cfg(feature = "java")]
     #[error("Unexpected JNI issue")]
-    JniProblem(jni::errors::Error),
+    JniProblem(#[source] jni::errors::Error),
 }
 
 #[cfg(feature = "java")]

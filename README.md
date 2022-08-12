@@ -114,6 +114,12 @@ class OHttpNativeWrapper {
     private static native void dropRequestContext(long ctx_ptr);
 
     private static native byte[] decapsulateResponse(long ctx_ptr, byte[] encapsulated_response);
+    
+    public static native String lastErrorMessage();
+
+    public static native void init();
+
+    public static native void drop(long ctx_ptr);
 }
 ```
 
