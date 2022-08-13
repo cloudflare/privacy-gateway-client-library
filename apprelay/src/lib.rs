@@ -3,25 +3,31 @@
 
 use error_ffi::update_last_error;
 use ohttp::{ClientRequest, ClientResponse};
+use std::any::Any;
 use std::{ptr, slice};
+
+use std::panic::catch_unwind;
 
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ClientError {
     #[error("Failed to create request context")]
-    RequestContextInitialization(ohttp::Error),
+    RequestContextInitialization(#[source] ohttp::Error),
     #[error("Failed to encapsulate request")]
-    EncapsulationFailed(ohttp::Error),
+    EncapsulationFailed(#[source] ohttp::Error),
     #[error("Failed to decapsulate request")]
-    DecapsulationFailed(ohttp::Error),
+    DecapsulationFailed(#[source] ohttp::Error),
 
     #[error("Invalid argument `{0}` passed")]
     InvalidArgument(String),
 
+    #[error("Panic unwinded at {0:?}")]
+    SafePanic(Box<dyn Any + Send>),
+
     #[cfg(feature = "java")]
     #[error("Unexpected JNI issue")]
-    JniProblem(jni::errors::Error),
+    JniProblem(#[source] jni::errors::Error),
 }
 
 #[cfg(feature = "java")]
@@ -128,30 +134,39 @@ pub unsafe extern "C" fn encapsulate_request_ffi(
     let encoded_msg: &[u8] =
         slice::from_raw_parts_mut(encoded_msg_ptr as *mut u8, encoded_msg_len as usize);
 
-    let client = match ClientRequest::new(encoded_config) {
-        Ok(c) => c,
-        Err(err) => {
-            let err = ClientError::RequestContextInitialization(err);
-            update_last_error(err);
-            return ptr::null_mut();
-        }
-    };
+    let result = catch_unwind(|| {
+        let client = match ClientRequest::new(encoded_config) {
+            Ok(c) => c,
+            Err(err) => {
+                let err = ClientError::RequestContextInitialization(err);
+                update_last_error(err);
+                return ptr::null_mut();
+            }
+        };
 
-    let (enc_request, client_response) = match client.encapsulate(encoded_msg) {
-        Ok(encapsulated) => encapsulated,
-        Err(err) => {
-            let err = ClientError::EncapsulationFailed(err);
-            update_last_error(err);
-            return ptr::null_mut();
-        }
-    };
+        let (enc_request, client_response) = match client.encapsulate(encoded_msg) {
+            Ok(encapsulated) => encapsulated,
+            Err(err) => {
+                let err = ClientError::EncapsulationFailed(err);
+                update_last_error(err);
+                return ptr::null_mut();
+            }
+        };
 
-    let ctx = Box::new(RequestContext {
-        encapsulated_request: enc_request,
-        response_context: client_response,
+        let ctx = Box::new(RequestContext {
+            encapsulated_request: enc_request,
+            response_context: client_response,
+        });
+        Box::into_raw(ctx)
     });
-
-    Box::into_raw(ctx)
+    match result {
+        Ok(ctx) => ctx,
+        Err(err) => {
+            let err = ClientError::SafePanic(err);
+            update_last_error(err);
+            ptr::null_mut()
+        }
+    }
 }
 
 /// Decapsulates the provided `encapsulated_response` using `context`.
@@ -173,13 +188,24 @@ pub unsafe extern "C" fn decapsulate_response_ffi(
         encapsulated_response_ptr as *mut u8,
         encapsulated_response_len as usize,
     );
-    let response = match context.response_context.decapsulate(encapsulated_response) {
-        Ok(response) => response,
+
+    let result = catch_unwind(|| {
+        let response = match context.response_context.decapsulate(encapsulated_response) {
+            Ok(response) => response,
+            Err(err) => {
+                let err = ClientError::DecapsulationFailed(err);
+                update_last_error(err);
+                return ptr::null_mut();
+            }
+        };
+        Box::into_raw(Box::new(ResponseContext { response }))
+    });
+    match result {
+        Ok(ctx) => ctx,
         Err(err) => {
-            let err = ClientError::DecapsulationFailed(err);
+            let err = ClientError::SafePanic(err);
             update_last_error(err);
-            return ptr::null_mut();
+            ptr::null_mut()
         }
-    };
-    Box::into_raw(Box::new(ResponseContext { response }))
+    }
 }

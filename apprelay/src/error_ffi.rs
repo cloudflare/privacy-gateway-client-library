@@ -1,10 +1,21 @@
 use std::{cell::RefCell, error::Error, slice};
 
 use libc::{c_char, c_int};
-use log::error;
+use log::{error, debug};
+
+use env_logger::{Builder, Target};
 
 thread_local! {
     static LAST_ERROR: RefCell<Option<Box<dyn Error>>> = RefCell::new(None);
+}
+
+#[no_mangle]
+pub extern "C" fn initialize_logging() {
+    let mut builder = Builder::from_default_env();
+    builder.target(Target::Stdout);
+
+    builder.init();
+    debug!("Logger initialized");
 }
 
 /// Update the last error, clearing the old one.
@@ -58,7 +69,7 @@ pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) 
         None => return 0,
     };
 
-    let error_message = last_error.to_string();
+    let error_message = last_error.to_string(); 
 
     let buffer = slice::from_raw_parts_mut(buffer as *mut u8, length as usize);
 

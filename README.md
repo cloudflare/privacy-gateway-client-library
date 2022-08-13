@@ -114,6 +114,12 @@ class OHttpNativeWrapper {
     private static native void dropRequestContext(long ctx_ptr);
 
     private static native byte[] decapsulateResponse(long ctx_ptr, byte[] encapsulated_response);
+    
+    public static native String lastErrorMessage();
+
+    public static native void init();
+
+    public static native void drop(long ctx_ptr);
 }
 ```
 
@@ -144,4 +150,15 @@ To build binaries with a smaller disk footprint you can use the `release-space-o
 ```
 
 For more background about the parameters set for this profile read [this repo](https://github.com/johnthagen/min-sized-rust).
+
+## Logging in runtime
+
+The library uses crate `env_logger` configured to log to stdout. To enable logging set environment variable:
+
+```
+RUST_LOG=debug
+```
+
+And in your application be sure to call function `initialize_logging` for C API or `init` for JNI.
+Initialization function can be called only once.
 
