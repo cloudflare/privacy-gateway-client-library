@@ -159,6 +159,6 @@ The library uses crate `env_logger` configured to log to stdout. To enable loggi
 RUST_LOG=debug
 ```
 
-And in your application be sure to call function `initialize_logging` for C api or `init` for jni.
+And in your application be sure to call function `initialize_logging` for C API or `init` for JNI.
 Initialization function can be called only once.
 
