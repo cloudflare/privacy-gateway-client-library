@@ -95,6 +95,19 @@ void initialize_logging(void);
 // Does not include any trailing null terminators.
 int last_error_length(void);
 
+// Write the most recent error UTF-8 encoded message into a provided buffer
+//
+// If there are no recent errors then this returns 0. -1 is returned if there is an error but something bad happened:
+// - provided `buffer` is too small
+// - or a provided `buffer` is a null pointer
+//
+// Otherwise the function returns the number of bytes written to the buffer.
+//
+// # Safety
+// The invariants are described here [`from_raw_parts_mut`](std::slice::from_raw_parts_mut#safety)
+int last_error_message(char *buffer,
+                       int length);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus
