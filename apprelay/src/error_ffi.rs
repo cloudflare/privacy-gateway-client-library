@@ -58,6 +58,7 @@ pub extern "C" fn last_error_length() -> libc::c_int {
 ///
 /// # Safety
 /// The invariants are described here [`from_raw_parts_mut`](std::slice::from_raw_parts_mut#safety)
+#[no_mangle]
 pub unsafe extern "C" fn last_error_message(buffer: *mut c_char, length: c_int) -> c_int {
     if buffer.is_null() {
         error!("Null pointer passed into last_error_message() as the buffer");
