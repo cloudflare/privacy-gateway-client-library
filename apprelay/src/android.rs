@@ -1,3 +1,5 @@
+use std::ptr::null_mut;
+
 use jni::JNIEnv;
 
 use jni::objects::JClass;
@@ -5,7 +7,7 @@ use jni::objects::JClass;
 use jni::sys::{jbyteArray, jlong, jstring};
 
 use crate::error_ffi::update_last_error;
-use crate::{ClientError, RequestContext};
+use crate::{null_safe_ptr, safe_unwrap, ClientError, RequestContext};
 
 /// Return most recent error as a Java `String`.
 ///
@@ -38,32 +40,13 @@ pub extern "system" fn Java_org_platform_OHttpNativeWrapper_encapsulateRequest(
     config: jbyteArray,
     msg: jbyteArray,
 ) -> jlong {
-    if config.is_null() {
-        update_last_error(ClientError::InvalidArgument("config".to_string()));
-        return -1;
-    }
-
-    if msg.is_null() {
-        update_last_error(ClientError::InvalidArgument("msg".to_string()));
-        return -1;
-    }
+    // check for null references passed
+    null_safe_ptr!(config, -1, ());
+    null_safe_ptr!(msg, -1, ());
 
     // First, we have to get the byte[] out of java.
-    let config = match env.convert_byte_array(config) {
-        Ok(c) => c,
-        Err(err) => {
-            update_last_error(ClientError::JniProblem(err));
-            return -1;
-        }
-    };
-
-    let msg = match env.convert_byte_array(msg) {
-        Ok(c) => c,
-        Err(err) => {
-            update_last_error(ClientError::JniProblem(err));
-            return -1;
-        }
-    };
+    let config = crate::safe_unwrap!(env.convert_byte_array(config), -1, ClientError::JniProblem);
+    let msg = crate::safe_unwrap!(env.convert_byte_array(msg), -1, ClientError::JniProblem);
 
     unsafe {
         let encapsulated =
@@ -93,13 +76,11 @@ pub unsafe extern "system" fn Java_org_platform_OHttpNativeWrapper_getEncapsulat
     context_ptr: jlong,
 ) -> jbyteArray {
     let context = &mut *(context_ptr as *mut RequestContext);
-    match env.byte_array_from_slice(&context.encapsulated_request[..]) {
-        Ok(req) => req,
-        Err(err) => {
-            update_last_error(ClientError::JniProblem(err));
-            std::ptr::null_mut() as _
-        }
-    }
+    safe_unwrap!(
+        env.byte_array_from_slice(&context.encapsulated_request[..]),
+        null_mut(),
+        ClientError::JniProblem
+    )
 }
 
 /// Frees up context memory. Be sure to call this in cases:
@@ -140,25 +121,19 @@ pub unsafe extern "system" fn Java_org_platform_OHttpNativeWrapper_decapsulateRe
     encapsulated_response: jbyteArray,
 ) -> jbyteArray {
     let context = Box::from_raw(context_ptr as *mut RequestContext);
-    let encapsulated_response = match env.convert_byte_array(encapsulated_response) {
-        Ok(rsp) => rsp,
-        Err(err) => {
-            update_last_error(ClientError::JniProblem(err));
-            return std::ptr::null_mut() as _;
-        }
-    };
-    let response = match context.response_context.decapsulate(&encapsulated_response) {
-        Ok(rsp) => rsp,
-        Err(err) => {
-            update_last_error(ClientError::DecapsulationFailed(err));
-            return std::ptr::null_mut();
-        }
-    };
-    match env.byte_array_from_slice(&response[..]) {
-        Ok(rsp) => rsp,
-        Err(err) => {
-            update_last_error(ClientError::JniProblem(err));
-            std::ptr::null_mut()
-        }
-    }
+    let encapsulated_response = crate::safe_unwrap!(
+        env.convert_byte_array(encapsulated_response),
+        null_mut(),
+        ClientError::JniProblem
+    );
+    let response = safe_unwrap!(
+        context.response_context.decapsulate(&encapsulated_response),
+        null_mut(),
+        ClientError::DecapsulationFailed
+    );
+    safe_unwrap!(
+        env.byte_array_from_slice(&response[..]),
+        null_mut(),
+        ClientError::JniProblem
+    )
 }
