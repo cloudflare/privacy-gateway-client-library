@@ -6,6 +6,7 @@
 use error_ffi::update_last_error;
 use ohttp::{ClientRequest, ClientResponse};
 use std::any::Any;
+use std::ptr::null_mut;
 use std::{ptr, slice};
 
 use std::panic::catch_unwind;
@@ -239,10 +240,16 @@ pub unsafe extern "C" fn encapsulate_request_ffi(
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
 pub unsafe extern "C" fn decapsulate_response_ffi(
-    context: Box<RequestContext>,
+    context: *mut RequestContext,
     encapsulated_response_ptr: *const u8,
     encapsulated_response_len: libc::size_t,
 ) -> *mut ResponseContext {
+    let context = null_safe_ptr!(
+        context,
+        null_mut(),
+        Box::from_raw(context)
+    );
+
     let encapsulated_response_ptr = null_safe_ptr!(
         encapsulated_response_ptr,
         ptr::null_mut(),
