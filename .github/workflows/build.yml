@@ -1,0 +1,168 @@
+name: Build and release artifacts
+
+on:
+  push:
+    branches:    
+      - '*'         # matches every branch that doesn't contain a '/'
+    tags:
+      - 'v*'        # matches every tag starting from 'v' 
+
+jobs:
+  build-android-libraries:
+    name: Build android libraries
+    runs-on: ubuntu-latest
+    # Map a step output to a job output
+    outputs:
+      jni_hashes: ${{ steps.vars.outputs.jni_libs_sha }}
+      jni_all_hashes: ${{ steps.vars.outputs.all_jni_libs_sha }}
+
+    steps:
+      - name: Save logcat output
+        uses: actions/upload-artifact@master
+        if: failure()
+        with:
+          name: logcat
+          path: artifacts/logcat.log
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: rust toolchain setup
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: install cargo ndk
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-ndk
+      - name: setup build targets
+        run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+
+      - name: build all targets
+        run: |
+          cargo ndk \
+            -t armeabi-v7a \
+            -t arm64-v8a \
+            -t x86 \
+            -t x86_64 \
+            -o ./target/jniLibs build --profile release-space-optimized || true
+          rm -r ./target/jniLibs || true
+          mkdir -p ./target/jniLibs/{armeabi-v7a,arm64-v8a,x86,x86_64}
+          cp ./target/armv7-linux-androideabi/release-space-optimized/libapprelay.so ./target/jniLibs/armeabi-v7a/libapprelay.so
+          cp ./target/aarch64-linux-android/release-space-optimized/libapprelay.so ./target/jniLibs/arm64-v8a/libapprelay.so
+          cp ./target/i686-linux-android/release-space-optimized/libapprelay.so ./target/jniLibs/x86/libapprelay.so
+          cp ./target/x86_64-linux-android/release-space-optimized/libapprelay.so ./target/jniLibs/x86_64/libapprelay.so
+
+      - name: Create tarball
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          cd ./target/jniLibs
+          tar -czvf jniLibs.tar.gz *
+
+      - name: Set checksum var
+        id: vars
+        run: |
+          echo ::set-output name=jni_libs_sha::$(sha256sum target/jniLibs/jniLibs.tar.gz)
+          # https://github.com/orgs/community/discussions/26288#discussioncomment-3251220
+          sums="$(sha256sum ./target/jniLibs/**/*.so)"
+          sums="${sums//'%'/'%25'}"
+          sums="${sums//$'\n'/'%0A'}"
+          sums="${sums//$'\r'/'%0D'}"
+
+          echo ::set-output name=all_jni_libs_sha::"$sums"
+ 
+      - name: Upload android binaries to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/jniLibs/jniLibs.tar.gz
+          asset_name:  jniLibs.tar.gz
+          tag: ${{ github.ref }}
+
+  build-ios-libraries:
+    name: Build ios libraries
+    runs-on: macos-latest
+    outputs:
+      hashes: ${{ steps.vars.outputs.ios_sha }}
+
+    steps:
+      - name: Save logcat output
+        uses: actions/upload-artifact@master
+        if: failure()
+        with:
+          name: logcat
+          path: artifacts/logcat.log
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: rust toolchain setup
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: ensure we have xcode installed
+        run: xcrun --show-sdk-build-version
+
+      - name: build all targets
+        run: |
+          declare -a arches=("x86_64-apple-ios" "aarch64-apple-ios" "x86_64-apple-ios" "aarch64-apple-ios-sim" )
+          for i in "${arches[@]}"
+          do
+             rustup target add $i
+             echo "building for arch $i"
+             cargo build --target $i \
+                --no-default-features \
+                --profile release-space-optimized
+             dir="./target/ios_libs/$i"
+             mkdir -p "$dir"
+             ls -al ./target/$i/release-space-optimized/
+             cp ./target/$i/release-space-optimized/libapprelay.{dylib,so,a} "$dir" || true
+          done
+
+      - name: package
+        run: |
+          mkdir include
+          cp apprelay/apprelay.h include
+          xcodebuild -create-xcframework \
+            -library target/aarch64-apple-ios/release-space-optimized/libapprelay.a -headers include \
+            -library target/aarch64-apple-ios-sim/release-space-optimized/libapprelay.a -headers include \
+            -output LibAppRelay.xcframework
+          lipo -create target/aarch64-apple-ios-sim/release-space-optimized/libapprelay.a \
+             target/x86_64-apple-ios/release-space-optimized/libapprelay.a \
+             -output LibAppRelay.xcframework/ios-arm64-simulator/libapprelay.a
+          zip -vr LibAppRelay.xcframework.zip LibAppRelay.xcframework
+
+      - name: Set checksum var
+        id: vars
+        run: echo ::set-output name=ios_sha::$(shasum -a 256 LibAppRelay.xcframework.zip)
+
+      - name: Upload binaries to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: LibAppRelay.xcframework.zip
+          asset_name:  LibAppRelay.xcframework.zip
+          tag: ${{ github.ref }}
+
+  hashes:
+    name: Collect Asset Hashes
+    runs-on: ubuntu-latest
+    needs: [ build-android-libraries, build-ios-libraries ]
+
+    steps:
+      - name: Generate hashes 
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          echo "${{  needs.build-ios-libraries.outputs.hashes }}" >> hashes.txt
+          echo "${{  needs.build-android-libraries.outputs.jni_hashes }}" >> hashes.txt
+          echo "${{  needs.build-android-libraries.outputs.jni_all_hashes }}" >> hashes.txt
+
+      - name: Upload asset hashes
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: hashes.txt 
+          asset_name:  hashes.txt
+          tag: ${{ github.ref }}

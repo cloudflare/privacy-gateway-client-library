@@ -8,6 +8,10 @@ Prior to building for any platform, [download and install Rust](https://rustup.r
 
 Running `cargo build --release` will build the library for the current platform, and library files will appear in `./target/release/`
 
+## Releasing new versions
+
+New versions and their corresponding artifacts are done by creating a [new release](https://github.com/cloudflare/app-relay-client-library/releases/new) with version number starting from letter `v` ie `v1.0.0`. A GitHub action will upload relevant release artifacts to release page.
+
 ## iOS Build Instructions
 
 To build the library for iOS:
