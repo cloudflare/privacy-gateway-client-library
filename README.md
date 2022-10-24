@@ -1,6 +1,6 @@
 # Sample Privacy Gateway Client Library
 
-This project contains a sample library that exposes [OHTTP](https://datatracker.ietf.org/doc/html/draft-ietf-ohai-ohttp-02) client-side interfaces for iOS and macOS. It is compatible with the saple [relay](https://github.com/cloudflare/privacy-gateway-relay) and corresponding [server](https://github.com/cloudflare/privacy-gateway-server-go).
+This project contains a sample library that exposes [OHTTP](https://datatracker.ietf.org/doc/html/draft-ietf-ohai-ohttp-02) client-side interfaces for iOS and macOS. It is compatible with the sample [relay](https://github.com/cloudflare/privacy-gateway-relay) and corresponding [server](https://github.com/cloudflare/privacy-gateway-server-go).
 
 ## Build instructions
 
