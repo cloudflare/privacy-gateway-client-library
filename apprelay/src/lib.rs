@@ -177,7 +177,7 @@ pub unsafe extern "C" fn response_context_message_len_ffi(
     )
 }
 
-/// Encapsulates the provided `encoded_msg` using `encoded_config` and returns
+/// Encapsulates the provided `encoded_msg` using `encoded_config_list` and returns
 /// a context used for decapsulating the corresponding response.
 ///
 /// This function will return a NULL pointer if:
@@ -191,24 +191,24 @@ pub unsafe extern "C" fn response_context_message_len_ffi(
 /// <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 #[no_mangle]
 pub unsafe extern "C" fn encapsulate_request_ffi(
-    encoded_config_ptr: *const u8,
-    encoded_config_len: libc::size_t,
+    encoded_config_list_ptr: *const u8,
+    encoded_config_list_len: libc::size_t,
     encoded_msg_ptr: *const u8,
     encoded_msg_len: libc::size_t,
 ) -> *mut RequestContext {
-    let encoded_config_ptr =
-        null_safe_ptr!(encoded_config_ptr, ptr::null_mut(), encoded_config_ptr);
+    let encoded_config_list_ptr =
+        null_safe_ptr!(encoded_config_list_ptr, ptr::null_mut(), encoded_config_list_ptr);
     let encoded_msg_ptr = null_safe_ptr!(encoded_msg_ptr, ptr::null_mut(), encoded_msg_ptr);
 
-    let encoded_config: &[u8] =
-        slice::from_raw_parts_mut(encoded_config_ptr as *mut u8, encoded_config_len as usize);
+    let encoded_config_list: &[u8] =
+        slice::from_raw_parts_mut(encoded_config_list_ptr as *mut u8, encoded_config_list_len as usize);
     let encoded_msg: &[u8] =
         slice::from_raw_parts_mut(encoded_msg_ptr as *mut u8, encoded_msg_len as usize);
 
     catch_panics!(
         {
             let client = safe_unwrap!(
-                { ClientRequest::new(encoded_config) },
+                { ClientRequest::from_encoded_config_list(encoded_config_list) },
                 ptr::null_mut(),
                 ClientError::RequestContextInitialization
             );
