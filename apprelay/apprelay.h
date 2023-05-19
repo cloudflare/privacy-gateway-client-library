@@ -59,7 +59,7 @@ uint8_t *response_context_message_ffi(struct ResponseContext *context);
 // <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 size_t response_context_message_len_ffi(struct ResponseContext *context);
 
-// Encapsulates the provided `encoded_msg` using `encoded_config` and returns
+// Encapsulates the provided `encoded_msg` using `encoded_config_list` and returns
 // a context used for decapsulating the corresponding response.
 //
 // This function will return a NULL pointer if:
@@ -71,8 +71,8 @@ size_t response_context_message_len_ffi(struct ResponseContext *context);
 // Be sure that the context has not been yet freed and that you are using a valid pointer.
 //
 // <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
-struct RequestContext *encapsulate_request_ffi(const uint8_t *encoded_config_ptr,
-                                               size_t encoded_config_len,
+struct RequestContext *encapsulate_request_ffi(const uint8_t *encoded_config_list_ptr,
+                                               size_t encoded_config_list_len,
                                                const uint8_t *encoded_msg_ptr,
                                                size_t encoded_msg_len);
 
