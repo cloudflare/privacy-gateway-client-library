@@ -1,14 +1,12 @@
 
 [workspace]
+resolver = "2"
 
-members = [
-    "apprelay"
-]
-
+members = ["apprelay"]
 
 [profile.release-space-optimized]
 inherits = "release"
-strip = true  # Automatically strip symbols from the binary.
-opt-level = "z"  # Optimize for size.
-lto = true  # Enable link time optimization
-codegen-units = 1  # Reduce parallel code generation units
+strip = true         # Automatically strip symbols from the binary.
+opt-level = "z"      # Optimize for size.
+lto = true           # Enable link time optimization
+codegen-units = 1    # Reduce parallel code generation units
