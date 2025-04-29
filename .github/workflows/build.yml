@@ -35,6 +35,9 @@ jobs:
 
       - name: build all targets
         run: |
+          export ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME"
+          export ANDROID_NDK_ROOT="$ANDROID_NDK_LATEST_HOME"
+          cargo ndk-env
           cargo ndk \
             -t armeabi-v7a \
             -t arm64-v8a \
