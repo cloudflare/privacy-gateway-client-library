@@ -1,11 +1,10 @@
-name: Build and release artifacts
+name: Build & (optionally) publish artifacts
 
 on:
   pull_request: {}
   push:
-    branches:
-      - main
-      - master
+    branches: [main, master]
+    tags: ["v*"]
 
 jobs:
   build-android-libraries:
@@ -18,18 +17,18 @@ jobs:
 
     steps:
       - name: Save logcat output
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: logcat
           path: artifacts/logcat.log
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: rust toolchain setup
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android i686-linux-android
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
 
       - name: install cargo ndk
         run: cargo install cargo-ndk
@@ -56,25 +55,25 @@ jobs:
           tar -czvf jniLibs.tar.gz *
 
       - name: Set checksum var
+        if: startsWith(github.ref, 'refs/tags/v')
         id: vars
         run: |
-          echo ::set-output name=jni_libs_sha::$(sha256sum target/jniLibs/jniLibs.tar.gz)
+          echo "jni_libs_sha=$(sha256sum target/jniLibs/jniLibs.tar.gz)" >> "$GITHUB_OUTPUT"
           # https://github.com/orgs/community/discussions/26288#discussioncomment-3251220
           sums="$(sha256sum ./target/jniLibs/**/*.so)"
           sums="${sums//'%'/'%25'}"
           sums="${sums//$'\n'/'%0A'}"
           sums="${sums//$'\r'/'%0D'}"
 
-          echo ::set-output name=all_jni_libs_sha::"$sums"
+          echo "all_jni_libs_sha=$sums" >> "$GITHUB_OUTPUT"
 
-      - name: Upload android binaries to release
+      # android
+      - name: Upload android libs
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: svenstaro/upload-release-action@v2
+        uses: actions/upload-artifact@v4
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/jniLibs/jniLibs.tar.gz
-          asset_name: jniLibs.tar.gz
-          tag: ${{ github.ref }}
+          name: android-jni
+          path: target/jniLibs/jniLibs.tar.gz
 
   build-ios-libraries:
     name: Build ios libraries
@@ -84,13 +83,13 @@ jobs:
 
     steps:
       - name: Save logcat output
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: logcat
           path: artifacts/logcat.log
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: rust toolchain setup
         uses: dtolnay/rust-toolchain@stable
 
@@ -127,11 +126,42 @@ jobs:
           zip -vr LibAppRelay.xcframework.zip LibAppRelay.xcframework
 
       - name: Set checksum var
-        id: vars
-        run: echo ::set-output name=ios_sha::$(shasum -a 256 LibAppRelay.xcframework.zip)
-
-      - name: Upload binaries to release
         if: startsWith(github.ref, 'refs/tags/v')
+        id: vars
+        run: echo "ios_sha=$(shasum -a 256 LibAppRelay.xcframework.zip)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload iOS xcframework
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xc
+          path: LibAppRelay.xcframework.zip
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-android-libraries, build-ios-libraries]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4 # android lib
+        with:
+          name: android-jni
+          path: .
+
+      - uses: actions/download-artifact@v4 # iOS lib
+        with:
+          name: ios-xc
+          path: .
+
+      - name: Upload android asset to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: jniLibs.tar.gz
+          asset_name: jniLibs.tar.gz
+          tag: ${{ github.ref }}
+
+      - name: Upload iOS asset to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -141,19 +171,18 @@ jobs:
 
   hashes:
     name: Collect Asset Hashes
-    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: [build-android-libraries, build-ios-libraries]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Generate hashes
-        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           echo "${{  needs.build-ios-libraries.outputs.hashes }}" >> hashes.txt
           echo "${{  needs.build-android-libraries.outputs.jni_hashes }}" >> hashes.txt
           echo "${{  needs.build-android-libraries.outputs.jni_all_hashes }}" >> hashes.txt
 
       - name: Upload asset hashes
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
