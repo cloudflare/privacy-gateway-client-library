@@ -83,9 +83,14 @@ pub unsafe extern "system" fn Java_org_platform_OHttpNativeWrapper_getEncapsulat
     )
 }
 
-/// Frees up context memory. Be sure to call this in cases:
-/// - after encapsulating the HTTP request was not performed
-/// - the response has not been returned or is not successful
+/// Frees up context memory. Call this ONLY if you did not call `decapsulateResponse`.
+///
+/// Use cases:
+/// - After `encapsulateRequest` if you decide not to send the request
+/// - If the HTTP request itself failed (network error, etc.) before receiving a response
+///
+/// Do NOT call this after `decapsulateResponse` - that function always consumes
+/// the context regardless of success or failure.
 ///
 /// # Safety
 /// Dereferences a pointer to `RequestContext` passed by the caller.
@@ -102,11 +107,13 @@ pub unsafe extern "system" fn Java_org_platform_OHttpNativeWrapper_drop(
 }
 
 /// Decapsulates the provided response `encapsulated_response` using
-/// requests config obtain by dereferencing `context_ptr`
+/// requests config obtained by dereferencing `context_ptr`.
 ///
-/// Returns an array containing the decapsulated response.
+/// This function **always consumes the context**, whether decapsulation succeeds or fails.
+/// Do NOT call `drop` after calling this function.
 ///
-/// If this function fails due JNI problems or decapsulation it returns a NULL pointer.
+/// Returns an array containing the decapsulated response on success, or NULL on failure.
+/// On failure, call `lastErrorMessage` to get error details.
 ///
 /// # Safety
 /// Dereferences a pointer to `RequestContext` passed by the caller.

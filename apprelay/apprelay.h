@@ -30,9 +30,14 @@ uint8_t *request_context_message_ffi(struct RequestContext *context);
 // <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 size_t request_context_message_len_ffi(struct RequestContext *context);
 
-// Frees up context memory. Be sure to call this in cases:
-// - after encapsulating the HTTP request was not performed
-// - the response has not been returned or is not successful
+// Frees up context memory. Call this ONLY if you did not call `decapsulate_response_ffi`.
+//
+// Use cases:
+// - After `encapsulate_request_ffi` if you decide not to send the request
+// - If the HTTP request itself failed (network error, etc.) before receiving a response
+//
+// Do NOT call this after `decapsulate_response_ffi` - that function always consumes
+// the context regardless of success or failure.
 //
 // # Safety
 // Dereferences a pointer to `RequestContext` passed by the caller.
@@ -78,7 +83,11 @@ struct RequestContext *encapsulate_request_ffi(const uint8_t *encoded_config_lis
 
 // Decapsulates the provided `encapsulated_response` using `context`.
 //
-// This function will return a NULL pointer if decapsulation fails.
+// This function **always consumes the context**, whether decapsulation succeeds or fails.
+// Do NOT call `request_context_message_drop_ffi` after calling this function.
+//
+// Returns a pointer to the decapsulated response on success, or NULL on failure.
+// On failure, call `last_error_message_ffi` to get error details.
 //
 // # Safety
 // Dereferences a pointer to `RequestContext` passed by the caller.
