@@ -64,8 +64,8 @@ uint8_t *response_context_message_ffi(struct ResponseContext *context);
 // <https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html#dereferencing-a-raw-pointer>
 size_t response_context_message_len_ffi(struct ResponseContext *context);
 
-// Encapsulates the provided `encoded_msg` using `encoded_config_list` and returns
-// a context used for decapsulating the corresponding response.
+// Encapsulates the provided `encoded_msg` using the first supported config in
+// `encoded_config_list` and returns a context used for decapsulating the corresponding response.
 //
 // This function will return a NULL pointer if:
 // - creating the request context fails due to input errors.
