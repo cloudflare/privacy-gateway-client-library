@@ -4,7 +4,7 @@ This project contains a sample library that exposes [OHTTP](https://datatracker.
 
 ## Build instructions
 
-Prior to building for any platform, [download and install Rust](https://rustup.rs) - we recommend at least `rustc 1.86.0` or greater.
+Prior to building for any platform, [download and install Rust](https://rustup.rs) - we recommend at least `rustc 1.89.0` or greater.
 
 Running `cargo build --release` will build the library for the current platform, and library files will appear in `./target/release/`
 

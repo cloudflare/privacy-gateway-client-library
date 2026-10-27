@@ -7,6 +7,34 @@ on:
     tags: ["v*"]
 
 jobs:
+  msrv:
+    name: Build with declared MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Read MSRV from apprelay/Cargo.toml
+        id: msrv
+        run: |
+          version="$(sed -n 's/^rust-version = "\([^"]*\)"/\1/p' apprelay/Cargo.toml)"
+          if [ -z "$version" ]; then
+            echo "apprelay/Cargo.toml has no rust-version" >&2
+            exit 1
+          fi
+          echo "rust-version: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: rust toolchain setup
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.msrv.outputs.version }}
+
+      # --locked keeps this honest: the committed Cargo.lock has to build on the
+      # declared MSRV, not just on whatever stable resolves to today.
+      - name: build
+        run: cargo build --locked --all-targets
+
   build-android-libraries:
     name: Build android libraries
     runs-on: ubuntu-latest
